@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Firebase Authentication Example</title>
-  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js"></script>
+  <title>Firebase Auth and Realtime Database</title>
+  <!-- Firebase App (Core) -->
+  <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+  <!-- Firebase Authentication -->
+  <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+  <!-- Firebase Realtime Database -->
+  <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
 </head>
 <body>
-  <h1>Firebase Write and Read with Authentication</h1>
+  <h1>Firebase Auth and Database Example</h1>
+
+  <!-- Authentication -->
   <div id="auth">
     <h2>Sign Up</h2>
     <input id="email" type="email" placeholder="Email" />
@@ -22,7 +27,8 @@
     <button onclick="logout()">Logout</button>
   </div>
 
-  <div id="data-section">
+  <!-- Realtime Database -->
+  <div id="data">
     <h2>Write Data</h2>
     <input id="dataInput" type="text" placeholder="Enter data to write" />
     <button onclick="writeData()">Write Data</button>
@@ -56,76 +62,81 @@
 
 
     // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.getAuth(app);
-    const database = firebase.getDatabase(app);
+    firebase.initializeApp(firebaseConfig);
+
+    // References to services
+    const auth = firebase.auth();
+    const database = firebase.database();
 
     // Sign Up
-    async function signUp() {
+    function signUp() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
-      try {
-        await firebase.createUserWithEmailAndPassword(auth, email, password);
-        alert("Sign-up successful!");
-      } catch (error) {
-        alert("Error: " + error.message);
-      }
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          alert("Sign-up successful!");
+        })
+        .catch((error) => {
+          alert("Error: " + error.message);
+        });
     }
 
     // Login
-    async function login() {
+    function login() {
       const email = document.getElementById("loginEmail").value;
       const password = document.getElementById("loginPassword").value;
-      try {
-        await firebase.signInWithEmailAndPassword(auth, email, password);
-        alert("Login successful!");
-      } catch (error) {
-        alert("Error: " + error.message);
-      }
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          alert("Login successful!");
+        })
+        .catch((error) => {
+          alert("Error: " + error.message);
+        });
     }
 
     // Logout
-    async function logout() {
-      try {
-        await firebase.signOut(auth);
-        alert("Logged out successfully!");
-      } catch (error) {
-        alert("Error: " + error.message);
-      }
+    function logout() {
+      auth.signOut()
+        .then(() => {
+          alert("Logged out successfully!");
+        })
+        .catch((error) => {
+          alert("Error: " + error.message);
+        });
     }
 
     // Write Data
-    async function writeData() {
+    function writeData() {
       const user = auth.currentUser;
       if (user) {
         const data = document.getElementById("dataInput").value;
-        const dbRef = firebase.ref(database, `users/${user.uid}/data`);
-        try {
-          await firebase.set(dbRef, data);
-          alert("Data written successfully!");
-        } catch (error) {
-          alert("Error: " + error.message);
-        }
+        database.ref('users/' + user.uid + '/data').set(data)
+          .then(() => {
+            alert("Data written successfully!");
+          })
+          .catch((error) => {
+            alert("Error: " + error.message);
+          });
       } else {
         alert("Please log in first.");
       }
     }
 
     // Read Data
-    async function readData() {
+    function readData() {
       const user = auth.currentUser;
       if (user) {
-        const dbRef = firebase.ref(database, `users/${user.uid}/data`);
-        try {
-          const snapshot = await firebase.get(dbRef);
-          if (snapshot.exists()) {
-            document.getElementById("output").textContent = JSON.stringify(snapshot.val(), null, 2);
-          } else {
-            alert("No data found.");
-          }
-        } catch (error) {
-          alert("Error: " + error.message);
-        }
+        database.ref('users/' + user.uid + '/data').once('value')
+          .then((snapshot) => {
+            if (snapshot.exists()) {
+              document.getElementById("output").textContent = JSON.stringify(snapshot.val(), null, 2);
+            } else {
+              alert("No data found.");
+            }
+          })
+          .catch((error) => {
+            alert("Error: " + error.message);
+          });
       } else {
         alert("Please log in first.");
       }

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Temperature Data</title>
+    <title>Temperature Data Filter</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
@@ -12,7 +12,12 @@
     </style>
 </head>
 <body>
-    <h1>Temperature Readings</h1>
+    <h1>Temperature Data</h1>
+    <div>
+        <label>Start Date/Time: <input type="datetime-local" id="startDateTime" step="1"></label>
+        <label>End Date/Time: <input type="datetime-local" id="endDateTime" step="1"></label>
+        <button onclick="fetchFilteredData()">Fetch Data</button>
+    </div>
     <table id="temperatureTable">
         <thead>
             <tr>
@@ -24,7 +29,6 @@
     </table>
 
     <script>
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBoaOnj64W6IF4heAYHcXoZAuAEGVMg_O0",
 
@@ -44,24 +48,33 @@
 
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // Fetch and display temperature data
-        database.ref('temperatures').on('value', (snapshot) => {
+        function fetchFilteredData() {
+            const startDateTime = document.getElementById('startDateTime').value;
+            const endDateTime = document.getElementById('endDateTime').value;
             const dataBody = document.getElementById('dataBody');
-            dataBody.innerHTML = ''; // Clear existing data
+            dataBody.innerHTML = '';
 
-            const data = snapshot.val();
-            if (data) {
-                Object.entries(data).forEach(([key, entry]) => {
-                    const row = dataBody.insertRow();
-                    row.insertCell(0).textContent = entry.timestamp;
-                    row.insertCell(1).textContent = entry.temperature + '°C';
+            const startTimestamp = new Date(startDateTime).toISOString();
+            const endTimestamp = new Date(endDateTime).toISOString();
+
+            database.ref('temperatures')
+                .orderByChild('timestamp')
+                .startAt(startTimestamp)
+                .endAt(endTimestamp)
+                .once('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        Object.entries(data).forEach(([key, entry]) => {
+                            const row = dataBody.insertRow();
+                            row.insertCell(0).textContent = entry.timestamp;
+                            row.insertCell(1).textContent = entry.temperature + '°C';
+                        });
+                    }
                 });
-            }
-        });
+        }
     </script>
 </body>
 </html>

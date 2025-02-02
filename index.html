@@ -12,7 +12,8 @@
     <script>
         function sendMessage() {
             const userText = document.getElementById("userInput").value;
-            fetch("https://api.dialogflow.com/v1/query?v=20150910", {
+            fetch("https://dialogflow.googleapis.com/v2/projects/led-on-off-67957/agent/sessions/12345:detectIntent
+", {
                 method: "POST",
                 headers: {
                     "Authorization": "62fd31572f48148fcf67f3da7b225db74af083fe",
